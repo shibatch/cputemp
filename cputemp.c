@@ -30,6 +30,14 @@ static char coreTempFn[1024];
 
 void findCoreTempFn() {
   for(int i=0;i<8;i++) {
+    snprintf(coreTempFn, 1000, "/sys/class/thermal/thermal_zone%d/temp", i);
+    FILE *fp = fopen(coreTempFn, "r");
+    if (fp != NULL) {
+      fclose(fp);
+      return;
+    }
+  }
+  for(int i=0;i<8;i++) {
     for(int j=0;j<8;j++) {
       for(int k=0;k<16;k++) {
 	snprintf(coreTempFn, 1000, "/sys/bus/platform/devices/coretemp.%d/hwmon/hwmon%d/temp%d_input", i, j, k);
