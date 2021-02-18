@@ -3,7 +3,34 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 #include <unistd.h>
+
+#define N 1000
+
+double doExec(char *cmd, char *fmt) {
+  FILE *pfp = popen(cmd, "r");
+
+  if (pfp == NULL) return NAN;
+
+  char *buf = malloc(N + 10);
+
+  double val = -1;
+  int success = 0;
+
+  while(fgets(buf, N, pfp) != NULL) {
+    if (sscanf(buf, fmt, &val)) {
+      success = 1;
+      break;
+    }
+  }
+
+  pclose(pfp);
+  free(buf);
+
+  return val;
+}
 
 int setFreq(double d) {
   int c = (int)(d * (1.0 / 1000));
@@ -32,12 +59,12 @@ void findCoreTempFn() {
   for(int i=0;i<8;i++) {
     for(int j=0;j<8;j++) {
       for(int k=0;k<16;k++) {
-	snprintf(coreTempFn, 1000, "/sys/bus/platform/devices/coretemp.%d/hwmon/hwmon%d/temp%d_input", i, j, k);
-	FILE *fp = fopen(coreTempFn, "r");
-	if (fp != NULL) {
-	  fclose(fp);
-	  return;
-	}
+        snprintf(coreTempFn, 1000, "/sys/bus/platform/devices/coretemp.%d/hwmon/hwmon%d/temp%d_input", i, j, k);
+        FILE *fp = fopen(coreTempFn, "r");
+        if (fp != NULL) {
+          fclose(fp);
+          return;
+        }
       }
     }
   }
@@ -49,10 +76,18 @@ void findCoreTempFn() {
       return;
     }
   }
-  exit(-1);
+  coreTempFn[0] = '\0';
 }
 
-double getTemp()    { return readNumber(coreTempFn) * (1.0 / 1000); }
+double getTemp(char *cmd, char *fmt) {
+  if (cmd != NULL) {
+    double v = doExec(cmd, fmt);
+    if (v != -1) return v;
+  }
+  if (coreTempFn[0] != '\0') return readNumber(coreTempFn) * (1.0 / 1000);
+  fprintf(stderr, "Cannot get temperature\n");
+  exit(-1);
+}
 double getMinFreq() { return readNumber("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq") * 1000.0; }
 double getMaxFreq() { return readNumber("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq") * 1000.0; }
 double getFreq()    { return readNumber("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq") * 1000.0; }
@@ -60,18 +95,21 @@ double getFreq()    { return readNumber("/sys/devices/system/cpu/cpu0/cpufreq/sc
 int main(int argc, char **argv) {
   if (argc == 1) {
     fprintf(stderr, "This program controls the CPU frequency to make its temperature close to the target\n");
-    fprintf(stderr, "Usage : %s <target temp in degrees> [<interval in second>] [-]\n", argv[0]);
+    fprintf(stderr, "Usage : %s <target temp in degrees> [<sensors command> <format string>]\n", argv[0]);
     fprintf(stderr, "\nhttps://github.com/shibatch\n");
     exit(-1);
   }
 
   findCoreTempFn();
 
-  double targetTemp = 70.0;
+  double targetTemp = 75.0;
   double interval = 10.0;
-  if (argc > 1) targetTemp = (int)(atof(argv[1]));
-  if (argc > 2) interval   = atof(argv[2]);
-  int verbose = argc > 3;
+  int verbose = 0;
+  char *cmdString = NULL, *fmtString = NULL;
+
+  if (argc >= 1) targetTemp = (int)(atof(argv[1]));
+  if (argc >= 2) cmdString = argv[2];
+  if (argc >= 3) fmtString = "Tdie:%lf";
 
   if (verbose) printf("Coretemp file name : %s\n", coreTempFn);
 
@@ -82,7 +120,7 @@ int main(int argc, char **argv) {
   double maxFreq = getMaxFreq(), minFreq = getMinFreq();
 
   for(;;) {
-    double curTemp = getTemp();
+    double curTemp = getTemp(cmdString, fmtString);
     if (prevTemp == -1) prevTemp = curTemp;
 
     if (verbose) printf("clock = %dMHz, temp = %.2g, target = %.2g\n", (int)(curFreq / 1e+6), curTemp, targetTemp);
