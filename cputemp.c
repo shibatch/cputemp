@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <float.h>
+#include <math.h>
 #include <unistd.h>
 
 int setFreq(double d) {
@@ -39,9 +41,9 @@ int readString(char *buf, size_t n, char *fn) {
   return ret;
 }
 
-static char coreTempFn[1024] = { '\0' };
+static char temperatureFn[1024] = { '\0' };
 
-void findCoreTempFn(const char *sensorID) {
+void findTemperatureFn(const char *sensorID) {
   int maxTemp = -1;
   char fn[1000], str[1000];
 
@@ -54,7 +56,7 @@ void findCoreTempFn(const char *sensorID) {
     int t = readNumber(fn);
     if (t > maxTemp) {
       maxTemp = t;
-      strncpy(coreTempFn, fn, sizeof(coreTempFn));
+      strncpy(temperatureFn, fn, sizeof(temperatureFn));
     }
   }
 
@@ -67,19 +69,41 @@ void findCoreTempFn(const char *sensorID) {
     int t = readNumber(fn);
     if (t > maxTemp) {
       maxTemp = t;
-      strncpy(coreTempFn, fn, sizeof(coreTempFn));
+      strncpy(temperatureFn, fn, sizeof(temperatureFn));
     }
   }
 }
 
 double getTemp() {
-  int t = readNumber(coreTempFn);
+  int t = readNumber(temperatureFn);
   if (t == -1) abort();
   return t * (1.0 / 1000);
 }
-double getMinFreq() { return readNumber("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq") * 1000.0; }
-double getMaxFreq() { return readNumber("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq") * 1000.0; }
-double getFreq()    { return readNumber("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq") * 1000.0; }
+double getMinFreq() {
+  double f = DBL_MAX;
+  for(int i=0;;i++) {
+    char fn[256];
+    snprintf(fn, sizeof(fn), "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_min_freq", i);
+    int t = readNumber(fn);
+    if (t == INT_MIN) break;
+    f = fmin(f, t * 1000.0);
+  }
+  return f == DBL_MAX ? NAN : f;
+}
+double getMaxFreq() {
+  double f = -DBL_MAX;
+  for(int i=0;;i++) {
+    char fn[256];
+    snprintf(fn, sizeof(fn), "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", i);
+    int t = readNumber(fn);
+    if (t == INT_MIN) break;
+    f = fmax(f, t * 1000.0);
+  }
+  return f == -DBL_MAX ? NAN : f;
+}
+double getFreq() {
+  return readNumber("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq") * 1000.0;
+}
 
 int main(int argc, char **argv) {
   if (argc == 1) {
@@ -118,10 +142,10 @@ int main(int argc, char **argv) {
   if (argc >= 4) interval = atof(argv[3]);
   if (argc >= 5) verbose = 1;
 
-  findCoreTempFn(sensorID);
+  findTemperatureFn(sensorID);
 
   if (targetTemp < 0) {
-    int t = readNumber(coreTempFn);
+    int t = readNumber(temperatureFn);
     if (t == INT_MIN) {
       fprintf(stderr, "Could not find sensor %s\n", sensorID);
       exit(-1);
@@ -130,7 +154,7 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
-  if (coreTempFn[0] == '\0') {
+  if (temperatureFn[0] == '\0') {
     fprintf(stderr, "Could not find sensor %s\n", sensorID);
     exit(-1);
   }
@@ -141,7 +165,7 @@ int main(int argc, char **argv) {
   }
 
   if (verbose) {
-    printf("Sensor file name : %s\n", coreTempFn);
+    printf("Sensor file name : %s\n", temperatureFn);
     printf("Max freq : %g MHz\n", getMaxFreq() / 1000.0 / 1000.0);
     printf("Min freq : %g MHz\n", getMinFreq() / 1000.0 / 1000.0);
   }
