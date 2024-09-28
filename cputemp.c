@@ -44,7 +44,6 @@ int readString(char *buf, size_t n, char *fn) {
 static char temperatureFn[1024] = { '\0' };
 
 void findTemperatureFn(const char *sensorID) {
-  int maxTemp = -1;
   char fn[1000], str[1000];
 
   for(int i=0;i<10;i++) {
@@ -53,9 +52,7 @@ void findTemperatureFn(const char *sensorID) {
     if (strcmp(str, sensorID) != 0) continue;
 
     snprintf(fn, sizeof(fn), "/sys/class/thermal/thermal_zone%d/temp", i);
-    int t = readNumber(fn);
-    if (t > maxTemp) {
-      maxTemp = t;
+    if (readNumber(fn) != INT_MIN) {
       strncpy(temperatureFn, fn, sizeof(temperatureFn));
     }
   }
@@ -66,9 +63,7 @@ void findTemperatureFn(const char *sensorID) {
     if (strcmp(str, sensorID) != 0) continue;
 
     snprintf(fn, sizeof(fn), "/sys/class/hwmon/hwmon%d/temp1_input", i);
-    int t = readNumber(fn);
-    if (t > maxTemp) {
-      maxTemp = t;
+    if (readNumber(fn) != INT_MIN) {
       strncpy(temperatureFn, fn, sizeof(temperatureFn));
     }
   }
