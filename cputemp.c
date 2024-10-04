@@ -99,6 +99,17 @@ double getMaxFreq() {
 double getFreq() {
   return readNumber("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq") * 1000.0;
 }
+double getCurFreq() {
+  double f = -DBL_MAX;
+  for(int i=0;;i++) {
+    char fn[256];
+    snprintf(fn, sizeof(fn), "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", i);
+    int t = readNumber(fn);
+    if (t == INT_MIN) break;
+    f = fmax(f, t * 1000.0);
+  }
+  return f == -DBL_MAX ? NAN : f;
+}
 
 int main(int argc, char **argv) {
   if (argc == 1) {
@@ -113,7 +124,7 @@ int main(int argc, char **argv) {
       if (readString(str, sizeof(str), fn)) {
 	snprintf(fn, sizeof(fn), "/sys/class/hwmon/hwmon%d/temp1_input", i);
 	int t = readNumber(fn);
-	if (t != INT_MIN) fprintf(stderr, "%s (%d), ", str, t);
+	if (t != INT_MIN) fprintf(stderr, "%s (%.3g C), ", str, t * (1.0 / 1000));
       }
     }
     for(int i=0;i<10;i++) {
@@ -121,7 +132,7 @@ int main(int argc, char **argv) {
       if (readString(str, sizeof(str), fn)) {
 	snprintf(fn, sizeof(fn), "/sys/class/thermal/thermal_zone%d/temp", i);
 	int t = readNumber(fn);
-	if (t != INT_MIN) fprintf(stderr, "%s (%d), ", str, t);
+	if (t != INT_MIN) fprintf(stderr, "%s (%.3g C), ", str, t * (1.0 / 1000));
       }
     }
     fprintf(stderr, "\n");
@@ -171,11 +182,29 @@ int main(int argc, char **argv) {
   double curFreq = getFreq();
   double maxFreq = getMaxFreq(), minFreq = getMinFreq();
 
+  setFreq(maxFreq);
+  usleep(100000);
+  if (getFreq() != maxFreq) {
+    fprintf(stderr, "%g %g\n", maxFreq, getFreq());
+    setFreq(curFreq);
+    fprintf(stderr, "Could not set frequency to the max freqency.\n");
+    exit(-1);
+  }
+
+  setFreq(minFreq);
+  usleep(100000);
+  if (getFreq() != minFreq) {
+    fprintf(stderr, "%g %g\n", minFreq, getFreq());
+    setFreq(curFreq);
+    fprintf(stderr, "Could not set frequency to the min freqency.\n");
+    exit(-1);
+  }
+
   for(;;) {
     double curTemp = getTemp();
     if (prevTemp == -1) prevTemp = curTemp;
 
-    if (verbose) printf("Clock = %dMHz, temp = %.3g, target = %.3g\n", (int)(curFreq / 1e+6), curTemp, targetTemp);
+    if (verbose) printf("CPU freq = %5dMHz, enforced freq = %5dMHz, CPU temp = %.3g, target temp = %.3g\n", (int)(getCurFreq() / 1e+6), (int)(curFreq / 1e+6), curTemp, targetTemp);
 
     double nextFreq = curFreq + C1 * (targetTemp - curTemp) - C2 * (curTemp - prevTemp);
     if (nextFreq > maxFreq) nextFreq = maxFreq;
