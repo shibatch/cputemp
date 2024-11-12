@@ -1,4 +1,4 @@
-## cputemp - A simple tool to keep CPU below specified temperature on a Linux computer
+## cputemp - A simple tool to keep CPU below specified temperature on Linux computer
 
 Original distribution site : https://github.com/shibatch/cputemp
 
@@ -64,7 +64,7 @@ the command without an argument, like the following.
 ```
 $ ./cputemp
 This program controls the CPU frequency to make its temperature close to the target
-Usage : ../cputemp <sensor ID> <target temperature in celcius> <interval in second> [verbose]
+Usage : ./cputemp <sensor ID> <target temperature in celcius> <interval in second> [verbose]
 
 https://github.com/shibatch
 
