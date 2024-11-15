@@ -55,7 +55,9 @@ The CPU clock frequency is controlled by changing the value of
 `/sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq`.  This means
 that this tool requires the cpufreq driver to honor the value of
 scaling_max_freq in order to work correctly. Some CPUs need kernel
-parameters to be set appropriately for this.
+parameters to be set appropriately for this. For example, you may
+need to add `amd_pstate=passive` to the kernel parameters to use
+this tool with AMD CPUs.
 
 To use this tool, you first need to check which sensor gives the CPU
 temperature. You can see the list of available sensor IDs by executing
