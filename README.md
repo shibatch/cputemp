@@ -44,6 +44,35 @@ tool controls the CPU temperature more aggressively than thermald.
 `cputemp [<options>]`
 
 
+### Options
+
+`--sensor <sensor name>`
+
+Specifies the name of sensor that gives the CPU temperature.
+
+`--period <seconds>`
+
+Specifies the interval at which temperature is checked and CPU
+frequency is controlled.
+
+`--temp <target temperature>`
+
+Specify target CPU temperature.
+
+`--daemon <pid file name>`
+
+Start this tool as a daemon. If this tool is already running as a
+daemon, it will be restarted with the new setting.
+
+`--kill-daemon <pid file name>`
+
+Kill already running daemon.
+
+`--verbose`
+
+Turn on verbose mode.
+
+
 ### Description
 
 This tool monitors temperature obtained by the sensor specified by
@@ -90,18 +119,17 @@ controlled by `--verbose` option.
 
 ```
 $ sudo ./cputemp --sensor k10temp --temp 80 --verbose
-[sudo] password for shibatch:
 Sensor file name : /sys/class/hwmon/hwmon1/temp1_input
 Max freq : 5881 MHz
 Min freq : 400 MHz
-Cur freq : 5488.64 MHz
-CPU freq = 476.966 MHz, scaling_max_freq = 400 MHz, CPU temp = 53.75 C, target temp = 80 C
-CPU freq = 564.43 MHz, scaling_max_freq = 925 MHz, CPU temp = 53.75 C, target temp = 80 C
-CPU freq = 1112.53 MHz, scaling_max_freq = 1450 MHz, CPU temp = 53.75 C, target temp = 80 C
-CPU freq = 1496.2 MHz, scaling_max_freq = 1975 MHz, CPU temp = 53.75 C, target temp = 80 C
-CPU freq = 2500 MHz, scaling_max_freq = 2500 MHz, CPU temp = 53.75 C, target temp = 80 C
+Cur freq : 5039.77 MHz
+CPU freq = 476.98 MHz, scaling_max_freq = 5881 MHz, CPU temp = 64.625 C, target temp = 80 C
+CPU freq = 674.05 MHz, scaling_max_freq = 5881 MHz, CPU temp = 64.5 C, target temp = 80 C
+CPU freq = 564.43 MHz, scaling_max_freq = 5881 MHz, CPU temp = 64.375 C, target temp = 80 C
+CPU freq = 674.05 MHz, scaling_max_freq = 5881 MHz, CPU temp = 64.25 C, target temp = 80 C
+CPU freq = 3524.17 MHz, scaling_max_freq = 5881 MHz, CPU temp = 64.25 C, target temp = 80 C
 ^C
-$ 
+$
 ```
 
 You should be able to observe that the CPU frequency is lowered and

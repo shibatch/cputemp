@@ -230,17 +230,6 @@ int main(int argc, char **argv) {
 
   const double maxFreq = getMaxFreq(), minFreq = getMinFreq();
 
-  setFreq(maxFreq);
-  for(int i=0;i<10 && getFreq() != maxFreq;i++)
-    this_thread::sleep_for(chrono::milliseconds(100));
-
-  if (getFreq() != maxFreq) {
-    cerr << "Could not set scaling_max_freq to the max freqency." << endl;
-    cerr << "Max freq         : " << (getMaxFreq() / 1000000.0) << " MHz" << endl;
-    cerr << "scaling_max_freq : " << (getFreq() / 1000000.0) << " MHz" << endl;
-    exit(-1);
-  }
-
   setFreq(minFreq);
   for(int i=0;i<10 && getFreq() != minFreq;i++)
     this_thread::sleep_for(chrono::milliseconds(100));
@@ -248,6 +237,17 @@ int main(int argc, char **argv) {
   if (getFreq() != minFreq) {
     cerr << "Could not set scaling_max_freq to the min freqency." << endl;
     cerr << "Min freq         : " << (getMinFreq() / 1000000.0) << " MHz" << endl;
+    cerr << "scaling_max_freq : " << (getFreq() / 1000000.0) << " MHz" << endl;
+    exit(-1);
+  }
+
+  setFreq(maxFreq);
+  for(int i=0;i<10 && getFreq() != maxFreq;i++)
+    this_thread::sleep_for(chrono::milliseconds(100));
+
+  if (getFreq() != maxFreq) {
+    cerr << "Could not set scaling_max_freq to the max freqency." << endl;
+    cerr << "Max freq         : " << (getMaxFreq() / 1000000.0) << " MHz" << endl;
     cerr << "scaling_max_freq : " << (getFreq() / 1000000.0) << " MHz" << endl;
     exit(-1);
   }
@@ -280,7 +280,7 @@ int main(int argc, char **argv) {
 
     if (verbose) {
       cout << "CPU freq = " << (getCurFreq() / 1000000.0) << " MHz, ";
-      cout << "scaling_max_freq = " << (curFreq / 1000000.0) << " MHz, ";
+      cout << "scaling_max_freq = " << (getFreq() / 1000000.0) << " MHz, ";
       cout << "CPU temp = " << curTemp << " C, ";
       cout << "target temp = " << targetTemp << " C" << endl;
     }
