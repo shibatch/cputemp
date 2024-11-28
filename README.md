@@ -41,18 +41,18 @@ tool controls the CPU temperature more aggressively than thermald.
 
 ### Synopsis
 
-`cputemp <sensor ID> <target temperature in celcius> <interval in second> [verbose]`
+`cputemp [<options>]`
 
 
 ### Description
 
 This tool monitors temperature obtained by the sensor specified by
-sensor ID every specified interval, and control the CPU clock
-frequency so that the temperature is kept below the specified target
+sensor ID every specified period, and control the CPU clock frequency
+so that the temperature is kept below the specified target
 temperature.
 
 The CPU clock frequency is controlled by changing the value of
-`/sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq`.  This means
+`/sys/devices/system/cpu/cpu*/cpufreq/scaling_max_freq`. This means
 that this tool requires the cpufreq driver to honor the value of
 scaling_max_freq in order to work correctly. Some CPUs need kernel
 parameters to be set appropriately for this. For example, you may
@@ -65,12 +65,19 @@ the command without an argument, like the following.
 
 ```
 $ ./cputemp
-This program controls the CPU frequency to make its temperature close to the target
-Usage : ./cputemp <sensor ID> <target temperature in celcius> <interval in second> [verbose]
+Usage : ./cputemp [<options>]
 
-https://github.com/shibatch
+This utility controls the CPU frequency to make its temperature close to the target
 
-Sensor IDs : nvme (42.9 C), k10temp (55.9 C), mt7921_phy0 (52 C), amdgpu (54 C),
+Options :
+  --sensor <sensor name>         Specify sensor name
+  --period <seconds>             Specify period
+  --temp <target temperature>    Specify target CPU temperature
+  --daemon <pid file name>       Daemonize
+  --kill-daemon <pid file name>  Kill already running daemon
+  --verbose                      Turn on verbose mode
+
+Available sensors : nvme (41.85 C), k10temp (58.75 C), mt7921_phy0 (50 C), amdgpu (52 C),
 $
 ```
 
@@ -79,28 +86,38 @@ gives the CPU temperature is k10temp.
 
 Then, you can specify this sensor ID and start the command as
 root. You can see the verbose output of how the temperature is
-controlled by giving the 4th argument.
+controlled by `--verbose` option.
 
 ```
-$ su
-Password:
-# ./cputemp k10temp 80 1 -
+$ sudo ./cputemp --sensor k10temp --temp 80 --verbose
+[sudo] password for shibatch:
 Sensor file name : /sys/class/hwmon/hwmon1/temp1_input
 Max freq : 5881 MHz
 Min freq : 400 MHz
-CPU freq =   557MHz, enforced freq =  5881MHz, CPU temp = 56.1, target temp = 80
-CPU freq =   619MHz, enforced freq =  5881MHz, CPU temp = 56.1, target temp = 80
-CPU freq =   674MHz, enforced freq =  5881MHz, CPU temp = 56, target temp = 80
+Cur freq : 5488.64 MHz
+CPU freq = 476.966 MHz, scaling_max_freq = 400 MHz, CPU temp = 53.75 C, target temp = 80 C
+CPU freq = 564.43 MHz, scaling_max_freq = 925 MHz, CPU temp = 53.75 C, target temp = 80 C
+CPU freq = 1112.53 MHz, scaling_max_freq = 1450 MHz, CPU temp = 53.75 C, target temp = 80 C
+CPU freq = 1496.2 MHz, scaling_max_freq = 1975 MHz, CPU temp = 53.75 C, target temp = 80 C
+CPU freq = 2500 MHz, scaling_max_freq = 2500 MHz, CPU temp = 53.75 C, target temp = 80 C
 ^C
-#
+$ 
 ```
 
 You should be able to observe that the CPU frequency is lowered and
 the CPU temperature is kept below the specified temperature by
-executing some task in another tty. If you are satisfied with the
+executing some task in another terminal. If you are satisfied with the
 results, you can copy the executable to /usr/local/bin and start it in
-/etc/rc.local.
+/etc/rc.local. In this case, `--daemon` option can be specified to
+start this tool as a daemon.
 
+```
+$ cat /etc/rc.local
+#!/bin/sh
+
+/usr/local/bin/cputemp --sensor k10temp --temp 80 --daemon /var/run/cputemp.pid
+$
+```
 
 ### License
 
