@@ -1,0 +1,13 @@
+[Unit]
+Description=Dynamically changes clock frequency to keep CPU below specified temperature
+
+[Service]
+User=root
+Type=exec
+PIDFile=/run/cputemp.pid
+ExecStart=/usr/local/bin/cputemp --daemon /run/cputemp.pid --sensor k10temp --temp 80
+ExecReload=/usr/local/bin/cputemp --daemon /run/cputemp.pid --sensor k10temp --temp 80
+ExecStop=/usr/local/bin/cputemp --kill-daemon /run/cputemp.pid
+
+[Install]
+WantedBy=multi-user.target

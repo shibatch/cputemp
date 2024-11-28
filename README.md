@@ -119,6 +119,23 @@ $ cat /etc/rc.local
 $
 ```
 
+Instead of starting cputemp from /etc/rc.local, you can also start it
+using systemd.
+
+To do this, first copy cputemp.service to the /etc/systemd/system
+directory :
+`sudo cp cputemp.service /etc/systemd/system/`
+
+Next, reload the service file :
+`sudo systemctl daemon-reload`
+
+Then, start cputemp service :
+`sudo systemctl status cputemp.service`
+
+To enable cputemp service on every reboot :
+`sudo systemctl enable cputemp.service`
+
+
 ### License
 
 The software is distributed under the Zero-Clause BSD, which means
