@@ -101,6 +101,7 @@ struct pidfh *pfh = NULL;
 
 void handler(int n) {
   if (pfh) pidfile_remove(pfh);
+  setFreq(getMaxFreq());
   exit(0);
 }
 
@@ -155,8 +156,8 @@ int main(int argc, char **argv) {
       if (nextArg+1 >= argc) showUsage(argv[0]);
       char *p;
       period = strtod(argv[nextArg+1], &p);
-      if (p == argv[nextArg+1] || *p || period < 0)
-	showUsage(argv[0], "A non-negative real value is expected after --period.");
+      if (p == argv[nextArg+1] || *p || period <= 0)
+	showUsage(argv[0], "A positive real value is expected after --period.");
       nextArg++;
     } else if (string(argv[nextArg]) == "--temp") {
       if (nextArg+1 >= argc) showUsage(argv[0]);
@@ -168,11 +169,11 @@ int main(int argc, char **argv) {
     } else if (string(argv[nextArg]) == "--verbose") {
       verbose = true;
     } else if (string(argv[nextArg]) == "--daemon") {
-      if (nextArg+1 >= argc) showUsage(argv[0]);
+      if (nextArg+1 >= argc) showUsage(argv[0], "Specify pid file name after --daemon");
       pidfn = argv[nextArg+1];
       nextArg++;
     } else if (string(argv[nextArg]) == "--kill-daemon") {
-      if (nextArg+1 >= argc) showUsage(argv[0]);
+      if (nextArg+1 >= argc) showUsage(argv[0], "Specify pid file name after --kill-daemon");
       pidfn = argv[nextArg+1];
       killDaemon = true;
       nextArg++;
